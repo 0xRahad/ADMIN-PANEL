@@ -18,7 +18,7 @@ class MyApp extends StatelessWidget {
     return GetMaterialApp(
       theme: AppTheme.themeData,
       debugShowCheckedModeBanner: false,
-      title: "Flutter App",
+      title: "Admin Panel",
       getPages: RoutePages.routes,
     );
   }
