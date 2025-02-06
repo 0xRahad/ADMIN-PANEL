@@ -11,6 +11,15 @@ class ProductViewModel extends GetxController {
   final TextEditingController priceController = TextEditingController();
   final TextEditingController stockController = TextEditingController();
   final TextEditingController productImageController = TextEditingController();
+
+  final TextEditingController upNameController = TextEditingController();
+  final TextEditingController upPriceController = TextEditingController();
+  final TextEditingController upStockController = TextEditingController();
+  final TextEditingController upProductImageController =
+      TextEditingController();
+
+  final productFormKey = GlobalKey<FormState>();
+  final updateFormKey = GlobalKey<FormState>();
   final repo = ProductRepository();
 
   final Rx<ApiResponse<List<Product>?>> productState =
@@ -22,10 +31,10 @@ class ProductViewModel extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    getOrders();
+    getProducts();
   }
 
-  void getOrders() async {
+  void getProducts() async {
     try {
       productState.value = ApiResponse.loading();
       final response = await repo.getProducts();
@@ -36,7 +45,7 @@ class ProductViewModel extends GetxController {
     }
   }
 
-  void deleteOrder({required String productId}) async {
+  void deleteProduct({required String productId}) async {
     try {
       final response = await repo.deleteProduct(productId: productId);
       final updatedList = List<Product>.from(productState.value.data ?? []);
@@ -48,7 +57,7 @@ class ProductViewModel extends GetxController {
     }
   }
 
-  void createOrder() async {
+  void addProduct() async {
     try {
       addProductState.value = ApiResponse.loading();
       final response = await repo.addProduct(
@@ -60,6 +69,7 @@ class ProductViewModel extends GetxController {
 
       if (response.product != null) {
         Get.back();
+        clearControllers();
         addProductState.value = ApiResponse.success(response);
 
         // Convert AddedProduct to Product
@@ -68,8 +78,8 @@ class ProductViewModel extends GetxController {
           name: response.product!.name,
           price: response.product!.price,
           image: response.product!.image,
-          inventory: response.product!.inventory, // Map stock properly
-          category: response.product!.category, // If applicable
+          inventory: response.product!.inventory,
+          category: response.product!.category,
         );
 
         final updatedList = List<Product>.from(productState.value.data ?? []);
@@ -85,4 +95,62 @@ class ProductViewModel extends GetxController {
     }
   }
 
+  void updateProduct({required String productId}) async {
+    try {
+      addProductState.value = ApiResponse.loading();
+      final response = await repo.updateProduct(
+        name: upNameController.text,
+        price: upPriceController.text,
+        image: upProductImageController.text,
+        stock: upStockController.text,
+        productId: productId,
+      );
+
+      if (response.product != null) {
+        Get.back();
+        clearUpdateControllers();
+        addProductState.value = ApiResponse.success(response);
+
+        final updatedProduct = Product(
+          id: response.product!.id,
+          name: response.product!.name,
+          price: response.product!.price,
+          image: response.product!.image,
+          inventory: response.product!.inventory,
+          category: response.product!.category,
+        );
+
+        final updatedList = List<Product>.from(productState.value.data ?? []);
+
+        final productIndex =
+            updatedList.indexWhere((product) => product.id == productId);
+        if (productIndex != -1) {
+          updatedList[productIndex] = updatedProduct;
+          productState.value = ApiResponse.success(updatedList);
+        }
+      } else {
+        addProductState.value = ApiResponse.error(response.message.toString());
+        mySnackBar(
+            title: "Error", body: response.message.toString(), isError: true);
+      }
+    } catch (error) {
+      addProductState.value = ApiResponse.error(error.toString());
+    }
+  }
+
+  void clearControllers() {
+    nameController.clear();
+    priceController.clear();
+    stockController.clear();
+    productImageController.clear();
+    productFormKey.currentState!.reset();
+  }
+
+  void clearUpdateControllers() {
+    upNameController.clear();
+    upPriceController.clear();
+    upStockController.clear();
+    upProductImageController.clear();
+    updateFormKey.currentState!.reset();
+  }
 }

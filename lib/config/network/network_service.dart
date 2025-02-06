@@ -10,20 +10,20 @@ import '../../core/exception/app_exception.dart';
 import 'base_api_service.dart';
 
 class NetworkService implements BaseApiService {
-  var _logger = Logger();
+  final _logger = Logger();
 
-  static const _BASE_URL = "https://logiculas.me/";
+  static const _BASE_URL = "https://api.logiculas.me/";
 
   @override
   Future<dynamic> callGetApi(String endpoint) async {
-    final _token = await SessionManager().getToken();
+    final token = await SessionManager().getToken();
     dynamic jsonResponse;
     try {
       final response = await httpClient.get(
         Uri.parse(_BASE_URL + endpoint),
         headers: {
           "Accept": "application/json",
-          "Authorization": "Bearer $_token",
+          "Authorization": "Bearer $token",
         },
       ).timeout(const Duration(seconds: 60));
       jsonResponse = returnResponse(response);
@@ -37,14 +37,14 @@ class NetworkService implements BaseApiService {
 
   @override
   Future<dynamic> callPostApi(String endpoint, dynamic data) async {
-    final _token = await SessionManager().getToken();
+    final token = await SessionManager().getToken();
     dynamic jsonResponse;
     try {
       final response = await httpClient
           .post(Uri.parse(_BASE_URL + endpoint),
               headers: {
                 "Accept": "application/json",
-                "Authorization": "Bearer $_token",
+                "Authorization": "Bearer $token",
                 "Content-Type":
                     "application/json", // Important for JSON payloads
               },
@@ -62,20 +62,43 @@ class NetworkService implements BaseApiService {
     return jsonResponse;
   }
 
+  @override
+  Future callDeleteApi(String endpoint) async {
+    final token = await SessionManager().getToken();
+    dynamic jsonResponse;
+    try {
+      final response =
+          await httpClient.delete(Uri.parse(_BASE_URL + endpoint), headers: {
+        "Accept": "application/json",
+        "Authorization": "Bearer $token",
+        "Content-Type": "application/json", // Important for JSON payloads
+      }).timeout(const Duration(seconds: 60));
+      jsonResponse = returnResponse(response);
+    } on SocketException {
+      throw NoInternetException('');
+    } on TimeoutException {
+      throw FetchDataException('Time out try again');
+    } catch (error) {
+      _logger.e(error.toString());
+      throw Exception("Something went wrong");
+    }
+    return jsonResponse;
+  }
 
   @override
-  Future callDeleteApi(String endpoint) async{
-    final _token = await SessionManager().getToken();
+  Future callPatchApi(String endpoint, requestBody) async {
+    final token = await SessionManager().getToken();
     dynamic jsonResponse;
     try {
       final response = await httpClient
-          .delete(Uri.parse(_BASE_URL + endpoint),
-          headers: {
-            "Accept": "application/json",
-            "Authorization": "Bearer $_token",
-            "Content-Type":
-            "application/json", // Important for JSON payloads
-          })
+          .patch(Uri.parse(_BASE_URL + endpoint),
+              headers: {
+                "Accept": "application/json",
+                "Authorization": "Bearer $token",
+                "Content-Type":
+                    "application/json", // Important for JSON payloads
+              },
+              body: jsonEncode(requestBody))
           .timeout(const Duration(seconds: 60));
       jsonResponse = returnResponse(response);
     } on SocketException {
@@ -100,5 +123,4 @@ class NetworkService implements BaseApiService {
       return responseData;
     }
   }
-
 }

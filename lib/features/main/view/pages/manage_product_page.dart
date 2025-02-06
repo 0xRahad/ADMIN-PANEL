@@ -53,7 +53,7 @@ class ManageProductPage extends StatelessWidget {
             height: 70,
             child: Icon(Icons.refresh, color: Colors.white),
             onPressed: () {
-              productVM.getOrders();
+              productVM.getProducts();
             },
           ),
         ],
@@ -92,10 +92,23 @@ class ManageProductPage extends StatelessWidget {
           rows: List<DataRow>.generate(
               products.length,
               (index) => DataRow(cells: [
-                    DataCell(CircleAvatar(
-                      backgroundImage:
-                          NetworkImage(products[index].image ?? ""),
-                    )),
+                    DataCell(
+                      CircleAvatar(
+                        backgroundColor: Colors.grey[300],
+                        child: ClipOval(
+                          child: Image.network(
+                            products[index].image ?? "",
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                            height: double.infinity,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Icon(Icons.error,
+                                  color: Colors.red); // Error icon
+                            },
+                          ),
+                        ),
+                      ),
+                    ),
                     DataCell(Text(products[index].name ?? "N/A")),
                     DataCell(Text(products[index].category ?? "N/A")),
                     DataCell(Text("\$${products[index].price ?? "0"}")),
@@ -105,11 +118,13 @@ class ManageProductPage extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         IconButton(
-                            onPressed: () {},
+                            onPressed: () {
+                              showUpdateProductDialog(products[index]);
+                            },
                             icon: Icon(Icons.edit_outlined, color: deepBlue)),
                         IconButton(
                             onPressed: () {
-                              productVM.deleteOrder(
+                              productVM.deleteProduct(
                                   productId: products[index].id.toString());
                             },
                             icon:
@@ -122,7 +137,7 @@ class ManageProductPage extends StatelessWidget {
 
   void showAddProductDialog() {
     final productVM = Get.find<ProductViewModel>();
-    final productFormKey = GlobalKey<FormState>();
+
     Get.dialog(
       AlertDialog(
         backgroundColor: Colors.white,
@@ -136,7 +151,7 @@ class ManageProductPage extends StatelessWidget {
         content: SizedBox(
           width: 400, // Set your preferred width
           child: Form(
-            key: productFormKey,
+            key: productVM.productFormKey,
             autovalidateMode: AutovalidateMode.onUserInteraction,
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -198,11 +213,115 @@ class ManageProductPage extends StatelessWidget {
                       isLoading: productVM.addProductState.value.status ==
                           Status.loading,
                       onPressed: () {
-                        if (productFormKey.currentState?.validate() ?? false) {
-                          productVM.createOrder();
+                        if (productVM.productFormKey.currentState?.validate() ??
+                            false) {
+                          productVM.addProduct();
                         }
                       },
                       buttonText: "Add Product",
+                    ))
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void showUpdateProductDialog(Product product) {
+    final productVM = Get.find<ProductViewModel>();
+
+    productVM.upProductImageController.value =
+        TextEditingValue(text: product.image ?? "");
+    productVM.upNameController.value =
+        TextEditingValue(text: product.name ?? "");
+    productVM.upPriceController.value =
+        TextEditingValue(text: product.price.toString());
+    productVM.upStockController.value =
+        TextEditingValue(text: product.inventory.toString());
+
+    Get.dialog(
+      AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        title: const Text(
+          "Update Product",
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: SizedBox(
+          width: 400, // Set your preferred width
+          child: Form(
+            key: productVM.updateFormKey,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CustomTextField(
+                  controller: productVM.upProductImageController,
+                  hintText: "Product Image",
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return "This field is required";
+                    }
+                    return null;
+                  },
+                ),
+                Gap(10),
+                CustomTextField(
+                  controller: productVM.upNameController,
+                  hintText: "Product Name",
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return "This field is required";
+                    }
+                    return null;
+                  },
+                ),
+                Gap(10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: CustomTextField(
+                        controller: productVM.upPriceController,
+                        hintText: "Price",
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return "This field is required";
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                    Gap(10),
+                    Expanded(
+                      child: CustomTextField(
+                        controller: productVM.upStockController,
+                        hintText: "Stock",
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return "This field is required";
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                Obx(() => CustomButton(
+                      height: 50,
+                      isLoading: productVM.addProductState.value.status ==
+                          Status.loading,
+                      onPressed: () {
+                        if (productVM.updateFormKey.currentState?.validate() ??
+                            false) {
+                          productVM.updateProduct(
+                              productId: product.id.toString());
+                        }
+                      },
+                      buttonText: "Update Product",
                     ))
               ],
             ),

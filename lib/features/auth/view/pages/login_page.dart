@@ -11,7 +11,7 @@ class LoginPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _formKey = GlobalKey<FormState>();
+    final formKey = GlobalKey<FormState>();
     final controller = Get.put(AuthViewModel());
 
     return Scaffold(
@@ -25,7 +25,7 @@ class LoginPage extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
           ),
           child: Form(
-            key: _formKey,
+            key: formKey,
             autovalidateMode: AutovalidateMode.onUserInteraction,
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -98,7 +98,7 @@ class LoginPage extends StatelessWidget {
                     isLoading: controller.isLoading.value,
                     buttonText: "Log in",
                     onPressed: () {
-                      if (_formKey.currentState?.validate() ?? false) {
+                      if (formKey.currentState?.validate() ?? false) {
                         controller.loginUser();
                       }
                     },

@@ -23,7 +23,7 @@ class SplashPage extends StatelessWidget {
               }
             });
           },
-        ).slideY(duration: Duration(seconds: 1)),
+        ).fade(duration: Duration(seconds: 1)),
       ),
     );
   }
