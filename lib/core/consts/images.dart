@@ -1,0 +1,1 @@
+const String splashLogo = "assets/logos/sp_logo.png";
